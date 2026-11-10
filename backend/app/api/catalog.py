@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,7 +26,11 @@ def list_courses(
         .offset(offset)
     )
     if category:
-        statement = statement.where(Course.category_id == category)
+        try:
+            category_id = UUID(category)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="category must be a valid UUID") from exc
+        statement = statement.where(Course.category_id == category_id)
     rows = db.execute(statement).all()
     return {
         "items": [

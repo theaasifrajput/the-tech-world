@@ -1,12 +1,13 @@
 from functools import lru_cache
-import firebase_admin
-from firebase_admin import auth as firebase_auth, credentials
 from fastapi import Depends, Header, HTTPException, status
 from app.core.config import settings
 
 
 @lru_cache(maxsize=1)
 def _firebase_app():
+    import firebase_admin
+    from firebase_admin import credentials
+
     if not settings.firebase_project_id:
         raise RuntimeError("FIREBASE_PROJECT_ID is not configured")
     try:
@@ -23,6 +24,7 @@ def require_authenticated_user(authorization: str | None = Header(default=None))
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
     token = authorization.removeprefix("Bearer ").strip()
     try:
+        from firebase_admin import auth as firebase_auth
         claims = firebase_auth.verify_id_token(token, app=_firebase_app(), check_revoked=True)
         return {
             "firebase_uid": claims["uid"],

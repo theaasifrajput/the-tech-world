@@ -21,7 +21,7 @@ def sync_profile(
     db: Session = Depends(get_db),
 ):
     email = identity.get("email")
-    if not email:
+    if not email or not identity.get("email_verified", False):
         raise HTTPException(status_code=400, detail="A verified email address is required")
     user = db.scalar(select(User).where(User.firebase_uid == identity["firebase_uid"]))
     if user is None:
